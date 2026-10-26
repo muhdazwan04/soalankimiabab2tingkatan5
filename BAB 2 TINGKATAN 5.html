@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="ms"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CHEMISTRY QUEST: Sebatian Karbon</title>
+<style>
+/* ===== ASAS & LATAR ===== */
+*{box-sizing:border-box;margin:0}
+body{font-family:'Segoe UI',sans-serif;color:#eafff6;min-height:100vh;background:linear-gradient(135deg,#0B3D3B,#1A5C57);overflow-x:hidden}
+#bg{position:fixed;inset:0;z-index:0}
+#app{position:relative;z-index:1;max-width:720px;margin:0 auto;padding:12px}
+.screen{display:none;background:rgba(255,255,255,.08);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(46,204,113,.45);border-radius:20px;padding:20px;box-shadow:0 0 30px rgba(46,204,113,.3);animation:fadeIn .5s}
+.screen.active{display:block}
+h1,h2{color:#2ECC71;margin-bottom:8px}h1{font-size:1.7rem;text-align:center}
+.gold{color:#FFD700;font-weight:700}.c{text-align:center}.hc{color:#2ECC71}.nc{color:#c39bd3}
+.logo{font-size:3rem;text-align:center;animation:rotateMolecule 6s linear infinite}
+.tw1{animation:twinkle 2s infinite}
+/* ===== BUTANG & INPUT ===== */
+.btn{display:block;width:100%;min-height:44px;margin:8px 0;padding:10px 16px;border:0;border-radius:12px;background:#2ECC71;color:#04251a;font-weight:700;font-size:1rem;cursor:pointer}
+.btn.p{background:#9B59B6;color:#fff}.btn.g{background:rgba(255,255,255,.18);color:#fff}
+.btn:focus-visible,.opt:focus-visible,input:focus-visible{outline:3px solid #FFD700}
+input{width:100%;min-height:44px;margin:6px 0;padding:8px 12px;border-radius:10px;border:1px solid #2ECC71;background:rgba(0,0,0,.35);color:#fff;font-size:1rem}
+#err{color:#ff9e94;min-height:1.3em;font-weight:600;margin:4px 0}
+.guide p{margin:8px 0;line-height:1.5;padding:8px 10px;border-radius:10px;background:rgba(0,0,0,.25)}
+/* ===== PERMAINAN ===== */
+.hud{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.tw{width:84px;height:84px}
+.timer-circle{width:100%;height:100%;transform:rotate(-90deg)}
+.timer-bg{fill:none;stroke:rgba(255,255,255,.18);stroke-width:8}
+.timer-progress{fill:none;stroke:#2ECC71;stroke-width:8;stroke-linecap:round;stroke-dasharray:282.74;stroke-dashoffset:0}
+.timer-text{fill:#fff;font-size:26px;font-weight:700;text-anchor:middle;dominant-baseline:central}
+.tw.warn .timer-progress{stroke:#F1C40F}
+.tw.danger .timer-progress{stroke:#E74C3C}.tw.danger{animation:pulseDanger .6s infinite}.tw.danger .timer-text{animation:timerPulse .6s infinite}
+#anim{display:block;margin:8px auto;background:rgba(0,0,0,.35);border-radius:16px;max-width:100%}
+#qt{color:#fff;font-size:1.2rem;margin:8px 0}
+.opt{display:block;width:100%;min-height:48px;margin:7px 0;padding:10px 14px;text-align:left;border-radius:12px;border:2px solid rgba(255,255,255,.35);background:rgba(0,0,0,.3);color:#fff;font-size:1rem;cursor:pointer}
+.opt:hover:not(:disabled){border-color:#2ECC71}.opt:disabled{cursor:default}
+.opt.ok{background:#2ECC71;color:#04251a;border-color:#fff;animation:pulseCorrect .6s}
+.opt.bad{background:#E74C3C;border-color:#fff;animation:shake .4s}
+#fb{display:none;margin:10px 0;padding:12px;border-radius:12px;background:rgba(0,0,0,.4);border-left:5px solid #FFD700;line-height:1.5}
+#bn{position:fixed;left:50%;top:18%;transform:translateX(-50%);font-size:2rem;font-weight:800;color:#FFD700;text-shadow:0 0 14px #FFD700;display:none;z-index:20;animation:bounce .6s infinite}
+.pt{position:fixed;left:50%;top:50%;width:10px;height:10px;border-radius:50%;pointer-events:none;z-index:15;animation:particleExplode .9s forwards}
+.glitch{animation:glitch .5s}
+/* ===== LEADERBOARD ===== */
+.row{display:flex;align-items:center;gap:12px;padding:10px;margin:6px 0;border-radius:12px;background:rgba(0,0,0,.3);border:2px solid transparent}
+.row.me{border-color:#FFD700}.row span{flex:1}.row small{display:block;opacity:.75}.row b:first-child{font-size:1.4rem;min-width:36px}
+/* ===== ANIMASI CSS ===== */
+@keyframes twinkle{50%{opacity:.4}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}}
+@keyframes pulseCorrect{50%{transform:scale(1.04);box-shadow:0 0 18px #2ECC71}}
+@keyframes shake{25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+@keyframes bounce{50%{transform:translateX(-50%) translateY(-12px)}}
+@keyframes particleExplode{to{transform:translate(var(--dx),var(--dy)) scale(0);opacity:0}}
+@keyframes glitch{20%{transform:translate(-6px,3px) skewX(5deg);filter:hue-rotate(90deg)}40%{transform:translate(6px,-3px)}60%{transform:translate(-4px,-2px) skewX(-5deg);filter:hue-rotate(200deg)}80%{transform:translate(4px,2px)}}
+@keyframes rotateMolecule{to{transform:rotate(360deg)}}
+@keyframes pulseDanger{50%{transform:scale(1.1)}}
+@keyframes timerPulse{50%{fill:#E74C3C}}
+@media(prefers-reduced-motion:reduce){.logo,.tw1,#bn{animation:none}}
+</style></head><body>
+<canvas id="bg"></canvas>
+<div id="app">
+
+<!-- SKRIN 1: AUTH -->
+<section id="sAuth" class="screen active">
+ <div class="logo">⚛️</div><h1>CHEMISTRY QUEST</h1>
+ <p class="c gold">Sebatian Karbon • Kimia Tingkatan 5 KSSM</p>
+ <p class="c" style="margin:10px 0">Penyelidik Muda, daftar atau log masuk untuk menyertai leaderboard.</p>
+ <input id="un" placeholder="Nama pengguna" autocomplete="username" aria-label="Nama pengguna">
+ <input id="pw" type="password" placeholder="Kata laluan" autocomplete="current-password" aria-label="Kata laluan">
+ <div id="err" role="alert"></div>
+ <button class="btn" onclick="login()">Log Masuk</button>
+ <button class="btn p" onclick="register()">Daftar Akaun Baru</button>
+ <button class="btn g" onclick="guestMode()">Main sebagai Tetamu</button>
+</section>
+
+<!-- SKRIN 2: MENU -->
+<section id="sMenu" class="screen">
+ <div class="logo tw1">🧪</div><h1 id="hi"></h1><p class="c gold" id="xp"></p>
+ <button class="btn" onclick="startGame()">🚀 MULA MISI</button>
+ <button class="btn p" onclick="initLeaderboard()">🏆 LEADERBOARD</button>
+ <button class="btn g" onclick="show('sGuide')">📖 PANDUAN</button>
+ <button class="btn g" onclick="logout()">Log Keluar</button>
+</section>
+
+<!-- SKRIN 3: PANDUAN -->
+<section id="sGuide" class="screen guide">
+ <h2>📖 Ringkasan Bab 2: Sebatian Karbon</h2>
+ <p><b class="hc">Alkana</b> (CₙH₂ₙ₊₂): hidrokarbon tepu, ikatan tunggal C–C sahaja. Contoh: metana, etana.</p>
+ <p><b class="hc">Alkena</b> (CₙH₂ₙ): tak tepu, ada ikatan ganda dua C=C. Menyahwarnakan air bromin.</p>
+ <p><b class="hc">Alkuna</b> (CₙH₂ₙ₋₂): tak tepu, ada ikatan ganda tiga C≡C.</p>
+ <p><b class="nc">Alkohol</b> (CₙH₂ₙ₊₁OH): kumpulan berfungsi –OH. Pengoksidaan menghasilkan asid karboksilik; pendehidratan menghasilkan alkena.</p>
+ <p><b class="nc">Asid karboksilik</b>: kumpulan berfungsi –COOH. Contoh: asid etanoik, CH₃COOH.</p>
+ <p><b class="nc">Ester</b>: kumpulan –COO–, berbau wangi. Asid karboksilik + alkohol → ester + air (mangkin H₂SO₄ pekat).</p>
+ <p><b class="gold">Pembakaran lengkap</b> hidrokarbon → CO₂ + H₂O. <b class="gold">Isomer</b>: formula molekul sama, formula struktur berbeza.</p>
+ <button class="btn" onclick="show('sMenu')">⬅ Kembali</button>
+</section>
+
+<!-- SKRIN 4-6: LEVEL 1-3 (satu skrin dikongsi, tajuk level berubah) -->
+<section id="sGame" class="screen">
+ <div class="hud"><div><b id="lvt" class="hc"></b><br><small id="qn"></small><br><span class="gold" id="sc"></span></div>
+ <div class="tw" id="tw"><svg class="timer-circle" viewBox="0 0 100 100" role="timer" aria-label="Masa berbaki"><circle class="timer-bg" cx="50" cy="50" r="45"></circle><circle class="timer-progress" id="tp" cx="50" cy="50" r="45"></circle><text class="timer-text" id="tt" x="50" y="50" transform="rotate(90 50 50)">300</text></svg></div></div>
+ <canvas id="anim" width="200" height="200"></canvas>
+ <h2 id="qt"></h2><div id="opts"></div><div id="fb" role="status"></div>
+ <button class="btn" id="nx" style="display:none" onclick="nextQuestion()">Soalan Seterusnya ➜</button>
+</section>
+
+<!-- SKRIN 7: KEMENANGAN -->
+<section id="sVic" class="screen c">
+ <div class="logo">🏆</div><h1>MISI SELESAI!</h1>
+ <h2 class="gold" id="vt" style="font-size:2.2rem"></h2><h2 id="vb" class="nc"></h2>
+ <p id="vd" style="line-height:1.8;margin:10px 0"></p><p id="vn" class="gold"></p>
+ <button class="btn" onclick="startGame()">Main Lagi</button>
+ <button class="btn p" onclick="initLeaderboard()">Leaderboard</button>
+ <button class="btn g" onclick="menu()">Menu</button>
+</section>
+
+<!-- SKRIN 8: LEADERBOARD -->
+<section id="sLb" class="screen">
+ <h2>🏆 Leaderboard</h2><div id="lb"></div>
+ <button class="btn" onclick="menu()">⬅ Kembali</button>
+</section>
+</div>
+<div id="bn"></div>
+
+<script>
+/* ===== PANGKALAN DATA (localStorage) ===== */
+const $=id=>document.getElementById(id);
+let db,cur=null,guest=false,S,raf,tmr,tStart=0,answered=false,curQ,curMap=[],cx,parts=[],AC;
+function loadDB(){try{db=JSON.parse(localStorage.getItem('chemistryQuestDB'))||{users:[]};if(!Array.isArray(db.users))db.users=[]}catch(e){db={users:[]}}}
+function saveDB(){try{localStorage.setItem('chemistryQuestDB',JSON.stringify(db))}catch(e){err('Gagal menyimpan data pelayar.')}}
+function err(m){$('err').textContent=m}
+function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML}
+function me(){return guest?null:db.users.find(x=>x.username===cur)||null}
+function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));$(id).classList.add('active');if(id!=='sGame'){stopTimer();cancelAnimationFrame(raf)}window.scrollTo(0,0)}
+
+/* ===== AKAUN: DAFTAR / LOG MASUK / TETAMU ===== */
+function register(){const u=$('un').value.trim(),p=$('pw').value;
+ if(u.length<3||p.length<4)return err('Nama pengguna minimum 3 aksara dan kata laluan minimum 4 aksara.');
+ if(db.users.some(x=>x.username.toLowerCase()===u.toLowerCase()))return err('Nama pengguna sudah digunakan. Pilih nama lain.');
+ db.users.push({username:u,password:p,bestScore:0,totalGames:0,lastPlayed:null,badges:[]});saveDB();cur=u;guest=false;menu()}
+function login(){const u=$('un').value.trim(),p=$('pw').value,x=db.users.find(a=>a.username.toLowerCase()===u.toLowerCase());
+ if(!x||x.password!==p)return err('Nama pengguna atau kata laluan salah.');cur=x.username;guest=false;menu()}
+function guestMode(){cur='Tetamu';guest=true;menu()}
+function logout(){cur=null;guest=false;$('pw').value='';err('');show('sAuth')}
+function menu(){err('');const u=me();$('hi').textContent='Hai '+cur+'!';
+ $('xp').textContent=u?'⭐ XP Terbaik: '+u.bestScore+' • Main: '+u.totalGames+'x':'Mod Tetamu: skor tidak disimpan di leaderboard';show('sMenu')}
+
+/* ===== DATA SOALAN: [animasi, param, soalan, pilihan, indeks betul, maklum balas] ===== */
+const LV=[
+{t:'Siri Homolog Arena',q:[
+['mol',6,'Apakah formula am bagi ALKANA?',['CₙH₂ₙ₊₂','CₙH₂ₙ','CₙH₂ₙ₋₂','CₙH₂ₙ₊₁OH'],0,'Alkana = hidrokarbon tepu, ikatan tunggal sahaja. n=1,2,3...'],
+['dbl',0,'Hidrokarbon manakah yang mempunyai ikatan ganda dua antara atom karbon?',['Alkana','Alkena','Alkuna','Alkohol'],1,'Alkena = hidrokarbon tak tepu dengan ≥1 ikatan C=C.'],
+['tpl',0,'Formula am bagi ALKUNA ialah...',['CₙH₂ₙ₊₂','CₙH₂ₙ','CₙH₂ₙ₋₂','CₙH₂ₙ₊₁OH'],2,'Alkuna = hidrokarbon tak tepu dengan ikatan C≡C, formula CₙH₂ₙ₋₂.'],
+['oh',0,'Kumpulan berfungsi bagi ALKOHOL ialah...',['-COOH','-OH','-COO-','C=C'],1,'Alkohol mengandungi kumpulan hidroksil, –OH.'],
+['cooh',0,'Asid karboksilik mempunyai kumpulan berfungsi...',['-OH','-COO-','-COOH','-CHO'],2,'Asid karboksilik = kumpulan karboksil, –COOH.'],
+['est',0,'Tindak balas antara asid karboksilik + alkohol menghasilkan...',['Ester + air','Garam + air','Alkohol + asid','Aldehid + keton'],0,'Esterifikasi: asid karboksilik + alkohol → ester + air.'],
+['oh',0,'Ahli pertama siri homolog ALKOHOL ialah...',['Metanol (CH₃OH)','Etanol (C₂H₅OH)','Propanol (C₃H₇OH)','Butanol (C₄H₉OH)'],0,'Metanol = n=1, formula CₙH₂ₙ₊₁OH dengan n=1 = CH₃OH.'],
+['est',0,'Bau wangi buah-buahan dihasilkan oleh siri homolog...',['Alkohol','Asid karboksilik','Ester','Alkana'],2,'Ester = berbau wangi, digunakan dalam minyak wangi dan perisa makanan.']]},
+{t:'Isomer & Penamaan',q:[
+['mol',4,'Berapakah bilangan isomer bagi BUTANA, C₄H₁₀?',['1','2','3','4'],1,'Butana: n-butana (rantai lurus) dan 2-metilpropana (bercabang) = 2 isomer.'],
+['mol',3,'Nama IUPAC bagi CH₃-CH(CH₃)-CH₃ ialah...',['Butana','2-metilpropana','Propana','Isobutana'],1,'Rantai terpanjang 3 karbon (propana) dengan cabang metil pada C-2.'],
+['dbl',0,'Isomer bagi PROPENA, C₃H₆ ialah...',['Tiada isomer','Satu isomer sahaja','Dua isomer','Tiga isomer'],1,'Propena hanya ada satu struktur (tiada isomer kedudukan sebab posisi ganda dua sama).'],
+['oh',0,'Berapakah isomer bagi C₃H₇OH (propanol)?',['1','2','3','4'],1,'Propan-1-ol dan propan-2-ol = 2 isomer.'],
+['oh',0,'Nama IUPAC bagi CH₃-CH(OH)-CH₃ ialah...',['Propan-1-ol','Propan-2-ol','Propanol','Isopropanol'],1,'Kumpulan –OH terletak pada karbon kedua: propan-2-ol.'],
+['mol',4,'Isomer yang mempunyai formula molekul SAMA tetapi formula struktur BERBEZA dipanggil...',['Alotrop','Isomer','Homolog','Polimer'],1,'Isomer = formula molekul sama, susunan atom (formula struktur) berbeza.']]},
+{t:'Sifat Kimia Challenge',q:[
+['burn',0,'Pembakaran LENGKAP alkana menghasilkan...',['CO₂ + H₂O','CO + H₂O','C + H₂O','CO₂ + H₂'],0,'Pembakaran lengkap (O₂ berlebihan) → CO₂ + H₂O. Tidak lengkap → C (jelaga) + CO + H₂O.'],
+['add','Br','Apakah yang berlaku apabila gas etena dialirkan melalui air bromin?',['Warna perang air bromin dinyahwarnakan','Warna air bromin kekal','Mendakan putih terbentuk','Gas terhasil'],0,'Alkena + Br₂ → 1,2-dibromoetana. Air bromin (perang) → tidak berwarna (ujian alkena).'],
+['add','H','Penambahan hidrogen (H₂) kepada alkena dengan mangkin Ni pada 180°C menghasilkan...',['Alkohol','Alkana','Asid karboksilik','Ester'],1,'Penghidrogenan: alkena + H₂ → alkana (ikatan C=C menjadi C–C).'],
+['oh',0,'Pengoksidaan etanol dengan KMnO₄ berasid menghasilkan...',['Etana','Etena','Asid etanoik','Etil etanoat'],2,'Etanol → [O] → Asid etanoik (CH₃COOH).'],
+['dbl',0,'Pendehidratan etanol dengan serpihan porselin panas menghasilkan...',['Etana','Etena','Asid etanoik','Etil etanoat'],1,'Etanol → etena + H₂O (air disingkirkan, terbentuk C=C).'],
+['est',0,'Tindak balas asid etanoik + etanol + H₂SO₄ pekat (mangkin) menghasilkan...',['Etil etanoat + air','Metil etanoat + air','Etana + air','Etena + air'],0,'CH₃COOH + C₂H₅OH → CH₃COOC₂H₅ (etil etanoat) + H₂O.']]}];
+
+/* ===== LOGIK PERMAINAN ===== */
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function startGame(){S={lv:0,qi:0,sc:[0,0,0],bonus:0,streak:0,seq:shuffle(LV.flatMap((L,l)=>L.q.map((_,i)=>[l,i])))};show('sGame');showQuestion()}
+function startLevel(n){S.lv=n;S.qi=0;show('sGame');showQuestion()}
+function total(){return S.sc[0]+S.sc[1]+S.sc[2]+S.bonus}
+function showQuestion(){const [l,i]=S.seq[S.qi];S.lv=l;const L=LV[l],q=L.q[i];curQ=q;answered=false;
+ $('lvt').textContent='Topik: '+L.t;$('qn').textContent='Soalan '+(S.qi+1)+' / '+S.seq.length;$('sc').textContent='⭐ '+total()+' XP';
+ $('qt').textContent=q[2];curMap=[0,1,2,3].sort(()=>Math.random()-.5);
+ const box=$('opts');box.innerHTML='';
+ curMap.forEach((oi,k)=>{const b=document.createElement('button');b.className='opt';b.textContent='ABCD'[k]+') '+q[3][oi];b.onclick=()=>checkAnswer(k);box.appendChild(b)});
+ $('fb').style.display='none';$('nx').style.display='none';
+ runAnim(q[0],q[1]);startTimer(300)}
+/* Semak jawapan: markah = max(10, round(100 x (1 - masa/300))) */
+function checkAnswer(k){if(answered)return;answered=true;const el=stopTimer(),ok=curMap[k]===curQ[4],bs=$('opts').children;let pts=0,msg;
+ Array.from(bs).forEach((b,j)=>{b.disabled=true;if(curMap[j]===curQ[4])b.classList.add('ok')});
+ if(ok){pts=Math.max(10,Math.round(100*(1-el/300)));S.sc[S.lv]+=pts;S.streak++;beep(660);particles();
+  let sb=0;if(S.streak%5===0)sb=100;else if(S.streak%3===0)sb=50;
+  if(sb){S.bonus+=sb;banner('🔥 STREAK +'+sb+'!')}msg='✅ BETUL!'}
+ else{S.streak=0;bs[k].classList.add('bad');triggerGlitch();beep(180);msg='❌ SALAH! Jawapan betul ditunjukkan dalam hijau.'}
+ finish(msg,el,pts,false)}
+/* Masa tamat: dianggap salah, auto ke soalan seterusnya selepas 2 saat */
+function timeUp(){if(answered)return;answered=true;stopTimer();S.streak=0;
+ Array.from($('opts').children).forEach((b,j)=>{b.disabled=true;if(curMap[j]===curQ[4])b.classList.add('ok')});
+ triggerGlitch();beep(180);finish('⏰ MASA TAMAT!',300,0,true);setTimeout(nextQuestion,2000)}
+function finish(msg,el,pts,auto){const f=$('fb');f.innerHTML='<b>'+msg+'</b><br>Masa: '+Math.floor(el)+'s | Markah: +'+pts+' poin<br>'+curQ[5];f.style.display='block';
+ $('sc').textContent='⭐ '+total()+' XP';if(!auto){$('nx').style.display='block';$('nx').focus()}}
+function nextQuestion(){S.qi++;if(S.qi>=S.seq.length)endGame();else showQuestion()}
+
+/* ===== TIMER (SVG circular, berasaskan performance.now supaya tepat) ===== */
+function startTimer(n){stopTimer();tStart=performance.now();updTimer(n);
+ tmr=setInterval(()=>{const el=(performance.now()-tStart)/1000;updTimer(n-el);if(el>=n)timeUp()},100)}
+function stopTimer(){if(tmr){clearInterval(tmr);tmr=null;return Math.min(300,(performance.now()-tStart)/1000)}return 0}
+function updTimer(rem){rem=Math.max(0,rem);$('tp').style.strokeDashoffset=282.74*(1-rem/300);$('tt').textContent=Math.ceil(rem);
+ $('tw').className='tw'+(rem>180?'':rem>60?' warn':' danger')}
+
+/* ===== TAMAT GAME & KEMENANGAN ===== */
+function badgeOf(t){return t<200?'Carbon Rookie':t<=500?'Molecule Explorer':t<=1000?'Hydrocarbon Hunter':t<=1500?'Carbon Master':'Chemistry Legend'}
+function endGame(){const tot=total(),b=badgeOf(tot),u=me();let note='Mod tetamu: skor tidak disimpan ke leaderboard.';
+ if(u){u.totalGames++;u.lastPlayed=Date.now();if(tot>u.bestScore)u.bestScore=tot;if(!u.badges.includes(b))u.badges.push(b);saveDB();note='Skor disimpan! Skor terbaik anda: '+u.bestScore}
+ $('vt').textContent=tot+' XP';$('vb').textContent='🏅 '+b;
+ $('vd').innerHTML='Level 1: '+S.sc[0]+' / 800<br>Level 2: '+S.sc[1]+' / 600<br>Level 3: '+S.sc[2]+' / 600<br>Bonus streak: +'+S.bonus+'<br><b class="gold">TOTAL: '+tot+' XP</b>';
+ $('vn').textContent=note;show('sVic');particles()}
+function initLeaderboard(){const l=[...db.users].sort((a,b)=>b.bestScore-a.bestScore),m=['🥇','🥈','🥉'];
+ $('lb').innerHTML=l.length?l.map((u,i)=>'<div class="row'+(!guest&&u.username===cur?' me':'')+'"><b>'+(m[i]||'#'+(i+1))+'</b><span>'+esc(u.username)+'<small>'+badgeOf(u.bestScore)+' • '+(u.lastPlayed?new Date(u.lastPlayed).toLocaleDateString('ms-MY'):'Belum main')+'</small></span><b class="gold">'+u.bestScore+'</b></div>').join(''):'<p>Belum ada pemain berdaftar.</p>';
+ show('sLb')}
+
+/* ===== KESAN: BUNYI, ZARAH, GLITCH, SPANDUK ===== */
+function beep(f){try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();const o=AC.createOscillator(),g=AC.createGain();o.frequency.value=f;g.gain.value=.08;o.connect(g);g.connect(AC.destination);o.start();o.stop(AC.currentTime+.15)}catch(e){}}
+function createParticles(){const cl=['#2ECC71','#FFD700','#9B59B6','#fff'];
+ for(let i=0;i<20;i++){const p=document.createElement('div'),a=i/20*6.283,d=120+Math.random()*120;p.className='pt';p.style.background=cl[i%4];p.style.setProperty('--dx',Math.cos(a)*d+'px');p.style.setProperty('--dy',Math.sin(a)*d+'px');document.body.appendChild(p);setTimeout(()=>p.remove(),1000)}}
+const particles=createParticles;
+function triggerGlitch(){const s=$('sGame');s.classList.add('glitch');setTimeout(()=>s.classList.remove('glitch'),500)}
+function banner(t){const b=$('bn');b.textContent=t;b.style.display='block';setTimeout(()=>b.style.display='none',1600)}
+
+/* ===== ANIMASI KANVAS 200x200 ===== */
+/* Lukis satu atom dengan kilauan dan label */
+function atom(x,y,r,c,l,tc){cx.shadowColor=c==='#222'?'#2ECC71':c;cx.shadowBlur=10;cx.fillStyle=c;cx.beginPath();cx.arc(x,y,Math.max(1,r),0,7);cx.fill();cx.shadowBlur=0;cx.strokeStyle='rgba(255,255,255,.5)';cx.lineWidth=1;cx.stroke();
+ if(l){cx.fillStyle=tc||'#fff';cx.font='bold '+Math.min(r*.9,r*1.7/(l.length*.6))+'px Segoe UI';cx.textAlign='center';cx.textBaseline='middle';cx.fillText(l,x,y)}cx.textBaseline='alphabetic'}
+function caption(s,c){cx.fillStyle=c||'#fff';cx.font='12px Segoe UI';cx.textAlign='center';cx.fillText(s,100,190)}
+/* Putaran 3D mengelilingi paksi Y: atom [{x,y,z,r,c,l,tc}], ikatan [[i,j,tertib]] */
+function scene(t,A,B,spin){const a=spin*t,co=Math.cos(a),si=Math.sin(a),P=A.map(o=>({...o,X:100+o.x*co+o.z*si,Y:100+o.y+Math.sin(t*3+o.x)*1.5,Z:o.z*co-o.x*si}));
+ cx.strokeStyle='#bbb';cx.lineWidth=3;
+ B.forEach(([i,j,k])=>{k=k||1;for(let m=0;m<k;m++){const d=(m-(k-1)/2)*6;cx.beginPath();cx.moveTo(P[i].X,P[i].Y+d);cx.lineTo(P[j].X,P[j].Y+d);cx.stroke()}});
+ P.slice().sort((a,b)=>a.Z-b.Z).forEach(o=>atom(o.X,o.Y,o.r*(1+o.Z/400),o.c,o.l,o.tc))}
+/* Animasi 1: molekul alkana berputar 360° setiap 4 saat (n karbon, 2n+2 hidrogen) */
+function molAtoms(n){const A=[],B=[];
+ for(let i=0;i<n;i++){A.push({x:(i-(n-1)/2)*28,y:i%2?8:-8,z:0,r:11,c:'#222',l:'C'});if(i)B.push([i-1,i])}
+ for(let i=0;i<n;i++){const o=A[i],d=i%2?1:-1;[16,-16].forEach(z=>{A.push({x:o.x,y:o.y+d*20,z,r:6,c:'#fff',l:''});B.push([i,A.length-1])})}
+ [[0,-24],[n-1,24]].forEach(([i,dx])=>{const o=A[i];A.push({x:o.x+dx,y:o.y,z:0,r:6,c:'#fff',l:''});B.push([i,A.length-1])});return[A,B]}
+/* Animasi 4: kumpulan berfungsi -OH dan -COOH */
+function ohAtoms(){const H=(x,y,z)=>({x,y,z,r:8,c:'#fff',l:'H',tc:'#000'});
+ return[[{x:-50,y:0,z:0,r:14,c:'#777',l:'C'},{x:0,y:-10,z:0,r:14,c:'#E74C3C',l:'O'},H(28,-30,0),H(-72,-24,10),H(-72,20,-14),H(-50,30,20)],[[0,1],[1,2],[0,3],[0,4],[0,5]]]}
+function coohAtoms(){const H=(x,y,z)=>({x,y,z,r:8,c:'#fff',l:'H',tc:'#000'});
+ return[[{x:-55,y:0,z:0,r:14,c:'#777',l:'C'},{x:-10,y:0,z:0,r:14,c:'#777',l:'C'},{x:10,y:-38,z:0,r:14,c:'#E74C3C',l:'O'},{x:18,y:30,z:0,r:14,c:'#E74C3C',l:'O'},H(46,42,0),H(-72,-24,12),H(-72,20,-14),H(-55,-34,-18)],[[0,1],[1,2,2],[1,3],[3,4],[0,5],[0,6],[0,7]]]}
+/* Animasi 2 & 3: ikatan ganda dua (biru) dan ganda tiga (merah) berdenyut */
+function bond(t,n,rgb){const b=Math.sin(t*2.5)*4,p=(Math.sin(t*4)+1)/2,xl=60-b,xr=140+b;cx.lineCap='round';
+ const hs=n===2?[[xl-28,70],[xl-28,130],[xr+28,70],[xr+28,130]]:[[xl-38,100],[xr+38,100]];
+ cx.strokeStyle='#aaa';cx.lineWidth=2;cx.shadowBlur=0;hs.forEach(([x,y])=>{cx.beginPath();cx.moveTo(x<100?xl:xr,100);cx.lineTo(x,y);cx.stroke()});
+ for(let m=0;m<n;m++){const y=100+(m-(n-1)/2)*12;cx.strokeStyle='rgba('+rgb+','+(.4+.6*p)+')';cx.lineWidth=4+3*p;cx.shadowColor='rgb('+rgb+')';cx.shadowBlur=14*p;cx.beginPath();cx.moveTo(xl,y);cx.lineTo(xr,y);cx.stroke()}
+ cx.shadowBlur=0;atom(xl,100,17,'#222','C');atom(xr,100,17,'#222','C');hs.forEach(([x,y])=>atom(x,y,8,'#fff','H','#000'));
+ caption(n===2?'C=C (tak tepu)':'C≡C (sangat reaktif)')}
+/* Animasi 5: tindak balas penambahan (Br₂ atau H₂ melompat ke ikatan ganda dua), ulang setiap 3 saat */
+function addition(t,type){const p=(t%3)/3,q=Math.min(1,p/.45),e=q*q*(3-2*q),done=p>=.45,Br=type==='Br',col=Br?'#A0522D':'#fff',r=Br?14:9,l=Br?'Br':'H',tc=Br?'#fff':'#000';
+ const C1=[65,125],C2=[135,125],E=[[62,62],[138,62]],St=[[15,20],[185,20]];cx.lineCap='round';cx.lineWidth=4;
+ cx.strokeStyle=done?'#2ECC71':'#3498DB';(done?[0]:[-5,5]).forEach(y=>{cx.beginPath();cx.moveTo(C1[0],C1[1]+y);cx.lineTo(C2[0],C2[1]+y);cx.stroke()});
+ [0,1].forEach(i=>{const x=St[i][0]+(E[i][0]-St[i][0])*e,y=St[i][1]+(E[i][1]-St[i][1])*e,C=i?C2:C1;
+  if(done){cx.strokeStyle='#bbb';cx.beginPath();cx.moveTo(x,y);cx.lineTo(C[0],C[1]);cx.stroke()}atom(x,y,r,col,l,tc)});
+ atom(C1[0],C1[1],15,'#222','C');atom(C2[0],C2[1],15,'#222','C');
+ caption(done?(Br?'Dibromoetana (tepu): perang → tanpa warna':'Alkana (tepu)'):'Alkena + '+(Br?'Br₂':'H₂'),done?'#2ECC71':'#fff')}
+/* Animasi 6: pembakaran (zarah api + CO₂ dan H₂O terbit) */
+function burn(t){for(let i=0;i<3;i++)parts.push({x:100+(Math.random()-.5)*40,y:165,vx:(Math.random()-.5)*.8,vy:-1.2-Math.random()*1.8,l:1});
+ parts=parts.filter(p=>p.l>0);
+ parts.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.l-=.018;cx.fillStyle='hsla('+(15+p.l*45)+',100%,50%,'+p.l+')';cx.beginPath();cx.arc(p.x,p.y,3+9*p.l,0,7);cx.fill()});
+ cx.font='bold 13px Segoe UI';cx.textAlign='center';
+ [['CO₂','#ddd',45],['H₂O','#7fd3ff',155]].forEach(([s,c,x],k)=>{const y=150-((t*28+k*55)%130);cx.globalAlpha=Math.max(0,y/150);cx.fillStyle=c;cx.fillText(s,x+Math.sin(t*2+k)*8,y)});
+ cx.globalAlpha=1;caption('Pembakaran + O₂ → CO₂ + H₂O','#FFD700')}
+/* Animasi 7: esterifikasi (asid + alkohol bergabung, air terlepas) */
+function ester(t){const p=(t%4)/4,q=Math.min(1,p/.45),e=q*q*(3-2*q),done=p>=.45;
+ atom(28+e*47,110,26,'#E74C3C','RCOOH');atom(172-e*47,110,26,'#3498DB','R′OH');
+ if(done){const w=(p-.45)/.55;cx.fillStyle='#FFD700';cx.font='bold 14px Segoe UI';cx.textAlign='center';cx.fillText('ESTER',100,152);
+  cx.globalAlpha=1-w*.6;atom(100+w*55,90-w*70,13,'#5dade2','H₂O');cx.globalAlpha=1}
+ caption('Asid + Alkohol → Ester + H₂O')}
+/* Enjin animasi: pilih fungsi mengikut jenis soalan */
+function runAnim(type,arg){cancelAnimationFrame(raf);parts=[];cx=$('anim').getContext('2d');const t0=performance.now();let sc=null,spin=Math.PI/2;
+ if(type==='mol')sc=molAtoms(arg);else if(type==='oh'){sc=ohAtoms();spin=Math.PI/3}else if(type==='cooh'){sc=coohAtoms();spin=Math.PI/3}
+ (function f(now){const t=(now-t0)/1000;cx.clearRect(0,0,200,200);cx.shadowBlur=0;
+  if(sc){scene(t,sc[0],sc[1],spin);caption(type==='mol'?'C'+arg+'H'+(2*arg+2)+' (alkana)':type==='oh'?'Kumpulan –OH':'Kumpulan –COOH')}
+  else if(type==='dbl')bond(t,2,'52,152,219');else if(type==='tpl')bond(t,3,'231,76,60');
+  else if(type==='add')addition(t,arg);else if(type==='burn')burn(t);else ester(t);
+  raf=requestAnimationFrame(f)})(t0)}
+
+/* ===== LATAR BELAKANG: sfera molekul terapung ===== */
+function bgInit(){const c=$('bg'),x=c.getContext('2d');let W,H;const rs=()=>{W=c.width=innerWidth;H=c.height=innerHeight};rs();addEventListener('resize',rs);
+ const M=Array.from({length:22},()=>({x:Math.random()*W,y:Math.random()*H,r:6+Math.random()*16,vx:(Math.random()-.5)*.4,vy:(Math.random()-.5)*.4,h:Math.random()<.5?'46,204,113':'155,89,182',p:Math.random()*6}));
+ (function f(){x.clearRect(0,0,W,H);M.forEach(m=>{m.x=(m.x+m.vx+W)%W;m.y=(m.y+m.vy+H)%H;m.p+=.02;const r=m.r*(1+Math.sin(m.p)*.1),g=x.createRadialGradient(m.x-r/3,m.y-r/3,1,m.x,m.y,r);g.addColorStop(0,'rgba(255,255,255,.7)');g.addColorStop(1,'rgba('+m.h+',.35)');x.fillStyle=g;x.beginPath();x.arc(m.x,m.y,r,0,7);x.fill()});requestAnimationFrame(f)})()}
+
+/* ===== MULA ===== */
+loadDB();bgInit();
+</script></body></html>
